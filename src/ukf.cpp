@@ -88,6 +88,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     // first measurement
     cout << "UKF: " << endl;
 
+    // Assume some nominal initial velocity
+    double v_i = 0.1;
+
     if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
       /**
       Convert radar from polar to cartesian coordinates and initialize state.
@@ -98,7 +101,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       float theta = meas_package.raw_measurements_[1];
       // initial speed not needed.
 
-      x_ << rho * cos(theta), rho * sin(theta), 0, 0, 0;
+      x_ << rho * cos(theta), rho * sin(theta), v_i, 0, 0;
 
       return;
 
@@ -108,7 +111,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       */
       cout << "LASER: " << meas_package.raw_measurements_ << endl;
       x_ << meas_package.raw_measurements_[0],
-              meas_package.raw_measurements_[1], 0, 0, 0;
+              meas_package.raw_measurements_[1], v_i, 0, 0;
     }
 
     // Initialize process covariance matrix to identity matrix.
@@ -259,7 +262,7 @@ void UKF::Prediction(double delta_t) {
   }
 
 //  cout << "Predict x: " << endl << x_ << endl;
-  cout << "Predict P: " << endl << P_ << endl;
+//  cout << "Predict P: " << endl << P_ << endl;
 
 }
 
@@ -302,7 +305,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   for (int i = 0; i < 15; i++) {
     z_pred = z_pred + weights_(i) * Zsig.col(i);
   }
-  cout << "z_pred: " << endl << z_pred << endl;
+//  cout << "z_pred: " << endl << z_pred << endl;
 
 
   //calculate measurement covariance matrix S
@@ -346,6 +349,12 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
 
   x_ = x_ + K * z_diff;
   P_ = P_ - K * S * K.transpose();
+
+
+  //NIS
+  double laser_nis = z_diff.transpose() * S.inverse() * z_diff;
+  // 2 degrees of freedom, so we want 95% > 0.103; 5% > 5.991
+  cout << "laser_nis: " << laser_nis << endl;
 }
 
 /**
@@ -393,7 +402,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   for (int i = 0; i < 15; i++) {
     z_pred = z_pred + weights_(i) * Zsig.col(i);
   }
-  cout << "z_pred: " << endl << z_pred << endl;
+//  cout << "z_pred: " << endl << z_pred << endl;
 
 
   //calculate measurement covariance matrix S
@@ -453,5 +462,10 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
   x_ = x_ + K * z_diff;
   P_ = P_ - K * S * K.transpose();
+
+  //NIS
+  double radar_nis = z_diff.transpose() * S.inverse() * z_diff;
+  // 3 degrees of freedom, so we want 95% > 0.352; 5% > 7.815
+  cout << "radar_nis: " << radar_nis << endl;
 
 }
