@@ -24,10 +24,10 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 0.2;
+  std_a_ = 0.7;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 0.2;
+  std_yawdd_ = 0.5;
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
@@ -113,6 +113,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
     // Initialize process covariance matrix to identity matrix.
     P_.setIdentity();
+    P_ = P_ / 10;
 
     // done initializing, no need to predict or update
     is_initialized_ = true;
@@ -258,7 +259,7 @@ void UKF::Prediction(double delta_t) {
   }
 
 //  cout << "Predict x: " << endl << x_ << endl;
-//  cout << "Predict P: " << endl << P_ << endl;
+  cout << "Predict P: " << endl << P_ << endl;
 
 }
 
